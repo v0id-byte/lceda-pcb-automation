@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+work/
+*.pkl
+.tmp/
+sid.txt

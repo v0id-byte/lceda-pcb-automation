@@ -1,0 +1,21 @@
+{
+  "project_uuid": "<from js/discover.js: project_uuid>",
+  "pcb_doc": "<from js/discover.js: boards[].pcb.uuid>",
+  "sch_pages": ["<boards[].sch_pages[].uuid>", "..."],
+
+  "board": {
+    "origin_mil": [0, 0],
+    "size_mm": [80.0, 26.0],
+    "keepouts_mm": [[72.5, -0.3, 80.3, 19.2]],
+    "slots_mm": []
+  },
+  "layers": { "copper": [1, 15, 16, 2], "planes": [15, 16], "route": [1, 16, 2] },
+  "gnd_net": "GND",
+  "clearance": {
+    "default_mil": 6,
+    "strong_mil": 8,
+    "edge_mil": 12,
+    "strong_nets": ["VM", "12V_IN"]
+  },
+  "via": { "default_mil": [12, 24] }
+}
