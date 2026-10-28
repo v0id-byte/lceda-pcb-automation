@@ -97,6 +97,8 @@ python tools/refresh.py --rebuild
 python tools/islands.py GND                 # floating ground pads after the re-pour
 python tools/render.py x0,y0,x1,y1 15,16 out.png --islands GND   # red = cut-off plane pocket
 python tools/gnd_fix.py C12.2 U3.4 [--commit]
+python tools/stitch.py VM --near 29.5,9.6 --via 20,36   # parallel vias where a net has copper on both layers
+python tools/stitch.py GND --in-pad U10.41 --n 9          # thermal vias inside an exposed pad
 ```
 
 Floating ground almost always has one of these causes:
@@ -130,6 +132,7 @@ decoupling, current paths, BOM stock and price, assembly sides.
   import_changes, netlist_sch, netlist_pcb, gerber, bom_cpl, rip_move, net_rules, region_track_rule).
 - `lib/`: `cfg`, `pcbgeo` (geometry loader + islands), `router` (A*), `check` (clearance), `eda`
   (run/commit), `camgeo` (Gerber parser).
-- `tools/`: the commands above.
+- `tools/`: the commands above, plus `move_via.py` / `move_part.py` (nudge copper and drag attached
+  track ends, clearance-checked) for clearing a corridor.
 - `references/pitfalls.md`: read it before the first commit on a new board.
 - `references/api-notes.md`: the LCEDA API calls used here, with their quirks.
