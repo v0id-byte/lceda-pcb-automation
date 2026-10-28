@@ -53,3 +53,23 @@
 14. **Fewer parts is sometimes the fix.** When a cap really can't be routed at the required width, check
     whether the remaining bulk and decoupling already cover it, and if so drop the part rather than
     choking the route. Write down the reasoning.
+
+15. **Greedy single-net routing is order-sensitive.** In a dense block the first net routed walls in the
+    next (e.g. a buffer's output route wrapping around a neighbouring pin). Use `route_order.py`: it tries
+    every order in memory and commits the shortest complete one. Route inputs and the most constrained
+    pin first; check total length afterwards, because a "successful" route can be a 50 mm detour.
+
+16. **`fit.py` legality ≠ routability.** A part can fit in a pocket nothing can reach. Use
+    `place_route.py`, which only accepts positions where every pad actually routes.
+
+17. **Pour priority: 1 = highest.** A new pour drawn over an existing ground pour with a larger number
+    fills nothing. A same-net pour over a power neck flows around the signal vias that pin a track to
+    25 mil and can more than double the cross-section without moving anything. Measure it afterwards
+    (cross-section cut or `necks.py`); don't just assume the fill landed.
+
+18. **Moving a part between sides mirrors it differently from a naive prediction.** After a move,
+    compare the returned pad positions with the plan. For 2-pad parts, re-rotate 180° if they came out
+    swapped. Otherwise a pad ends up on another net's copper.
+
+19. **DNP parts still have copper, and usually stencil paste.** Keep their pads away from THT joints
+    of other nets as well. The CAM check reports mask dams < 0.1 mm that the fab will remove.

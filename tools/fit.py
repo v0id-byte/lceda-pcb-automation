@@ -1,4 +1,4 @@
-"""fit.py spec.json : search legal placements near target points (board mm). spec: {"rip":[ids], "fixed":{des:[x,y,rot,side]}, "parts":[{"d":des,"t":[x,y],"side":2,"rots":[0,90,180,270],"r":3.0,"step":0.1,"clr":0.2,"court":0.2}]}
+"""fit.py spec.json : search legal placements near target points (board mm). spec: {"rip":[ids], "fixed":{des:[x,y,rot,side]}, "parts":[{"d":des,"t":[x,y],"side":2,"rots":[0,90,180,270],"r":3.0,"step":0.1,"clr":0.2,"court":0.2,"avoid":[{"pads":["J1.1"],"dist":1.0}]}]}
 pads are taken from current geom (any position) and re-transformed; parts are placed sequentially (each placed part becomes an obstacle)."""
 import sys,json,math
 import _boot  # noqa: F401
@@ -37,7 +37,7 @@ for d,c in comps.items():
     u=unary_union([o['shape'] for o in ps]); b=u.bounds
     sides=[1,2] if any(len(o['layers'])>1 for o in ps) else [1 if ps[0]['layers'][0]==1 else 2]
     for s in sides: court[s].append(box(*b))
-def ok(shapes,side,clr,cm,keep_extra):
+def ok(shapes,side,clr,cm,keep_extra,avoid=()):
     cb=unary_union([s for _,_,_,s in shapes]).bounds; cbox=box(*cb).buffer(cm*MM,join_style=2)
     if not pcbgeo.OUTLINE.buffer(-0.3*MM).contains(cbox): return False,'edge'
     if cbox.intersects(pcbgeo.KEEPOUT): return False,'keepout'
@@ -48,6 +48,9 @@ def ok(shapes,side,clr,cm,keep_extra):
             if o['net']==net and o['kind']!='pad': continue
             if not set(L)&set(o['layers']): continue
             if o['shape'].distance(s)<max(clr*MM, router.pclr(cfg.CLR+0.2,o['net'])): return False,('cu',o['kind'],o['net'])
+    for av in avoid:  # {"pads": ["J1.1", ...], "dist": mm}: keep every pad of this part that far from them
+        for o in [o for o in objs if o['id'] in av['pads']]:
+            if any(o['shape'].distance(s)<av['dist']*MM for *_,s in shapes): return False,('avoid',o['id'])
     return True,''
 placed={}; extra={1:[],2:[]}
 for d,(x,y,r,s) in spec.get('fixed',{}).items():
@@ -67,7 +70,7 @@ for p in spec['parts']:
     for dist,x,y in cands:
         for r in p.get('rots',[0,90,180,270]):
             sh=place_shapes(d,cfg.X(x),cfg.Y(y),r,side)
-            good,why=ok(sh,side,p.get('clr',0.2),p.get('court',0.15),extra)
+            good,why=ok(sh,side,p.get('clr',0.2),p.get('court',0.15),extra,p.get('avoid',()))
             if good: best=(round(x,3),round(y,3),r,side,sh); break
         if best: break
     if not best: print('NOFIT',d); continue

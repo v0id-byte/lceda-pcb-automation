@@ -84,6 +84,8 @@ python tools/manual.py plan.json [--commit]         # hand-drawn copper, same cl
 - The router is a grid A* (2.5 mil grid) on the real exported geometry. Every other-net object is
   inflated by the clearance rule. The ground pour is never an obstacle, because it re-pours around new
   copper. Vias honour hole-to-hole spacing and are never placed in a pad.
+- Dense block with several nets? `python tools/route_order.py N1 N2 N3 [--rip] --commit` tries every
+  order in memory instead of committing a greedy sequence that walls itself in.
 - Route the nets that need the most room first: power widths from the rule table, then
   length-critical nets, then everything else. Refresh after every commit; the next route must see the
   previous one.
@@ -132,7 +134,8 @@ decoupling, current paths, BOM stock and price, assembly sides.
   import_changes, netlist_sch, netlist_pcb, gerber, bom_cpl, rip_move, net_rules, region_track_rule).
 - `lib/`: `cfg`, `pcbgeo` (geometry loader + islands), `router` (A*), `check` (clearance), `eda`
   (run/commit), `camgeo` (Gerber parser).
-- `tools/`: the commands above, plus `move_via.py` / `move_part.py` (nudge copper and drag attached
+- `tools/`: the commands above, plus `route_order.py` (try net orders in memory), `place_route.py`
+  (placement that must also route), `stubs.py` (dangling track ends), `move_via.py` / `move_part.py` (nudge copper and drag attached
   track ends, clearance-checked) for clearing a corridor.
 - `references/pitfalls.md`: read it before the first commit on a new board.
 - `references/api-notes.md`: the LCEDA API calls used here, with their quirks.
