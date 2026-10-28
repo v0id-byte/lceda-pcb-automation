@@ -65,7 +65,8 @@
 17. **Pour priority: 1 = highest.** A new pour drawn over an existing ground pour with a larger number
     fills nothing. A same-net pour over a power neck flows around the signal vias that pin a track to
     25 mil and can more than double the cross-section without moving anything. Measure it afterwards
-    (cross-section cut or `necks.py`); don't just assume the fill landed.
+    with the Gerber (`camcheck.py` geometry), not only the API geometry. In one case the API-side
+    estimate said 45 mil while the Gerber measured 32.
 
 18. **Moving a part between sides mirrors it differently from a naive prediction.** After a move,
     compare the returned pad positions with the plan. For 2-pad parts, re-rotate 180° if they came out
@@ -73,3 +74,7 @@
 
 19. **DNP parts still have copper, and usually stencil paste.** Keep their pads away from THT joints
     of other nets as well. The CAM check reports mask dams < 0.1 mm that the fab will remove.
+
+20. **Arcs are real geometry.** Pour fills use `'ARC', sweep_deg, x, y` segments (positive sweep = centre
+    on the left of the chord), and boards contain arc tracks (`pcb_PrimitiveArc`). Treating arcs as
+    straight chords overstates copper and invents false splits. `pcbgeo` now interpolates both.

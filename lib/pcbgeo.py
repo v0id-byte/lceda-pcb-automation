@@ -9,6 +9,7 @@ load() returns (raw, objs); every obj is a dict:
 plus x/y (pads, vias), x1/y1/x2/y2/w (tracks), dia (vias), ref (pads: designator).
 """
 import json
+import math
 from shapely.geometry import Polygon, Point, LineString
 from shapely.ops import unary_union
 from shapely import affinity
@@ -52,8 +53,28 @@ def pad_shape(p):
     return affinity.translate(s, p['x'], p['y'])
 
 
+def arc_pts(p0, p1, ang_deg, n=None):
+    """points (excluding p0) of an arc from p0 to p1 sweeping ang_deg; positive = centre on the left
+    of the chord (verified against LCEDA pour fills: arc centres land on via centres)."""
+    th = math.radians(ang_deg)
+    dx, dy = p1[0] - p0[0], p1[1] - p0[1]
+    c = math.hypot(dx, dy)
+    if c < 1e-9 or abs(th) < 1e-6:
+        return [p1]
+    r = c / (2 * math.sin(abs(th) / 2))
+    h = r * math.cos(abs(th) / 2)
+    side = 1 if th > 0 else -1
+    ox = (p0[0] + p1[0]) / 2 - side * h * dy / c
+    oy = (p0[1] + p1[1]) / 2 + side * h * dx / c
+    a0 = math.atan2(p0[1] - oy, p0[0] - ox)
+    n = n or max(2, int(abs(th) / (math.pi / 16)) + 1)
+    pts = [(ox + r * math.cos(a0 + th * k / n), oy + r * math.sin(a0 + th * k / n)) for k in range(1, n)]
+    return pts + [p1]
+
+
 def ring_pts(r, scale=10.0):
-    """LCEDA complexPolygon ring (numbers, 'L'/'ARC' markers, unit 10 mil) -> point list in mil"""
+    """LCEDA complexPolygon ring (numbers, 'L'/'ARC' markers, unit 10 mil) -> point list in mil.
+    'ARC' is followed by the sweep angle (deg) and the end point; the start is the previous point."""
     pts = []
     i = 0
     mode = 'L'
@@ -64,10 +85,10 @@ def ring_pts(r, scale=10.0):
             i += 1
             continue
         if mode == 'ARC':
-            i += 1  # skip the arc angle, keep the end point
-            if i + 1 < len(r):
-                pts.append((r[i] * scale, r[i + 1] * scale))
-                i += 2
+            if i + 2 < len(r) and pts:
+                ang = r[i]
+                pts += arc_pts(pts[-1], (r[i + 1] * scale, r[i + 2] * scale), ang)
+            i += 3
             mode = 'L'
             continue
         pts.append((r[i] * scale, r[i + 1] * scale))
@@ -92,6 +113,12 @@ def load(geom_path=None, poured_path=None):
         s = LineString([a, b]).buffer(t['w'] / 2, 8) if a != b else Point(*a).buffer(t['w'] / 2, 8)
         objs.append(dict(kind='track', id=t['id'], net=t['net'] or '', layers=[t['l']], shape=s, w=t['w'],
                          x1=t['x1'], y1=t['y1'], x2=t['x2'], y2=t['y2']))
+    for t in g.get('arcs', []):  # arc tracks
+        if t['l'] not in CU:
+            continue
+        pts = [(t['x1'], t['y1'])] + arc_pts((t['x1'], t['y1']), (t['x2'], t['y2']), t['ang'])
+        objs.append(dict(kind='track', id=t['id'], net=t['net'] or '', layers=[t['l']], shape=LineString(pts).buffer(t['w'] / 2, 8),
+                         w=t['w'], x1=t['x1'], y1=t['y1'], x2=t['x2'], y2=t['y2'], arc=t['ang']))
     for v in g['vias']:
         objs.append(dict(kind='via', id=v['id'], net=v['net'] or '', layers=list(CU),
                          shape=Point(v['x'], v['y']).buffer(v['dia'] / 2, 12), x=v['x'], y=v['y'],
