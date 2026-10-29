@@ -86,6 +86,10 @@ or new name. Find them in `geom.json` and rip them with `js/rip_move.js`.
   nudges a small part clear (dragging its track ends), and `place_route.py` keeps candidates
   outside other parts' outlines (`fit.py` only uses pad extents + a margin). Run `courtyard.py` after every placement batch.
   `tools/fix_overlaps.py` works through the overlap list automatically and reports what it could not move.
+- **Vias whose drill lands in an SMD pad** pass DRC (same net) but wick solder away during reflow.
+  `tools/vias_in_pads.py --skip <thermal-pad parts>` lists them (`--geom old/geom.json` for a baseline
+  to diff against); `tools/dogbone.py PAD --commit` moves the via just outside the pad and joins it
+  with a stub. Whatever cannot move needs the fab's via-in-pad process (filled and capped) on the order.
 - A footprint with NPTH pegs or slots (some tactile switches, connectors) drills through every layer.
   Pass them to `place_route.py --holes dx,dy,dia;...`; read them from the footprint with
   `openLibraryDocument` (see `references/api-notes.md`).
@@ -137,11 +141,12 @@ Floating ground almost always has one of these causes:
 | Schematic == PCB | `netdiff.py sch.json pcb.json` | no changes, no single-pin nets |
 | Intent | `netdiff.py base_sch.json sch.json` | only the planned changes |
 | Footprints apart | `courtyard.py` (`--body --gap 0.1` if no silkscreen) | no overlapping pairs: parts on one side are separated by their **silkscreen outlines** (or bodies), not just by pad clearance (pitfalls #27) |
+| Vias out of pads | `vias_in_pads.py --skip U1,...` | no new `HOLE` rows, or via-in-pad ordered (pitfalls #35) |
 | Connectivity | `islands.py`, `stubs.py` | only the known false splits (see pitfalls #6); every dangling end explained |
 | Widths | `widths.py`, `necks.py NET:mil` | power nets meet their current; necks only at pins |
 | Corners | `angles.py` | no acute corners from your own routing |
 | Saved | `eda.sh js/save_all.js`, `eda.sh close destroy`, reopen, re-read one change | the change is there after reopening (pitfalls #8) |
-| CAM | `cam_export.py OUT [--no-silk]`, `camcheck.py OUT/gerber`, `assembly_drawing.py OUT/assembly.pdf` | no copper at the edge, hole spacing and rings OK; assembly drawing readable |
+| CAM | `cam_export.py OUT [--no-silk]`, `camcheck.py OUT/gerber`, `assembly_drawing.py OUT/assembly.pdf` | no copper at the edge, hole spacing and rings OK, no new mask dams < 0.1 mm (pitfalls #34); assembly drawing readable, polarity marked |
 
 Then snapshot the `.eprj2` together with `drc.json`, both netlists and `geom.json`, and have an
 **independent reviewer** (a fresh agent) check the exported data read-only: datasheet limits,
@@ -154,7 +159,7 @@ decoupling, current paths, BOM stock and price, assembly sides.
   import_changes, netlist_sch, netlist_pcb, gerber, bom_cpl, rip_move, net_rules, region_track_rule).
 - `lib/`: `cfg`, `pcbgeo` (geometry loader + islands), `router` (A*), `check` (clearance), `eda`
   (run/commit), `camgeo` (Gerber parser).
-- `tools/`: the commands above, plus `courtyard.py` / `unoverlap.py` / `fix_overlaps.py` (footprint overlaps), `assembly_drawing.py`, `route_order.py` (try net orders in memory), `place_route.py`
+- `tools/`: the commands above, plus `courtyard.py` / `unoverlap.py` / `fix_overlaps.py` (footprint overlaps), `vias_in_pads.py` / `dogbone.py` (vias in pads), `assembly_drawing.py`, `route_order.py` (try net orders in memory), `place_route.py`
   (placement that must also route), `stubs.py` (dangling track ends), `move_via.py` / `move_part.py` (nudge copper and drag attached
   track ends, clearance-checked) for clearing a corridor.
 - `examples/ldo-breakout/`: a complete 2-layer run (`.eprj3` before/after + walkthrough). Use it to

@@ -1,8 +1,9 @@
 """assembly_drawing.py OUT.pdf [--title TEXT] : assembly / designator drawing, one page per side.
 
 For boards ordered without silkscreen (or with silkscreen too dense to read): board outline, every
-footprint outline (pads + footprint silkscreen extent, from js/comp_bbox.js), pads, pin 1 in red, and
-the designator in the middle of each part. The bottom page is mirrored, as seen from the bottom.
+footprint outline (pads + footprint silkscreen extent, from js/comp_bbox.js), pads, polarity in red
+(pin 1 of ICs and connectors, '+' on electrolytic caps, 'K' on the cathode of any pin named K;
+bidirectional '-BI' footprints get none), and the designator in the middle of each part. The bottom page is mirrored, as seen from the bottom.
 Needs a fresh geom.json (tools/refresh.py).
 """
 import argparse, json
@@ -20,6 +21,14 @@ r = eda.run('comp_bbox.js', 300)
 if not r.get('success'):
     raise SystemExit(f"comp_bbox.js failed: {r.get('error')}")
 parts = r['result']
+nl = eda.run('netlist_sch.js', 120)   # the PCB netlist leaves pin names empty
+if not nl.get('success'):
+    raise SystemExit(f"netlist_sch.js failed: {nl.get('error')}")
+t = json.loads(nl['result']['text'])
+PIN = {(c['props'].get('Designator'), n): (v.get('name') or '').upper()
+       for c in t['components'].values() if isinstance(c, dict) and 'props' in c for n, v in c.get('pinInfoMap', {}).items()}
+FP = {f['d']: f['fp'] for f in parts}
+HAS_K = {d for (d, n), name in PIN.items() if name in ('K', 'CATHODE')}
 g, objs = pcbgeo.load()
 pads = [o for o in objs if o['kind'] == 'pad' and o.get('ref') not in (None, '__SLOT')]
 W, H = cfg.SIZE_MM
@@ -35,6 +44,19 @@ NPADS = {}
 for p in pads:
     NPADS[p['ref']] = NPADS.get(p['ref'], 0) + 1
 
+
+def polarity(ref, n):
+    """(red?, label) for one pad. LCSC electrolytic footprints (CAP-SMD_BD...) put + on pin 1."""
+    fp = FP.get(ref, '')
+    if fp.endswith('-BI'):
+        return False, ''
+    if fp.startswith('CAP-SMD_BD'):
+        return n == '1', '+' if n == '1' else ''
+    if ref in HAS_K:
+        k = PIN.get((ref, n)) in ('K', 'CATHODE')
+        return k, 'K' if k else ''
+    return n in ('1', 'A1') and (NPADS.get(ref, 0) > 2 or ref.startswith(POLAR)), ''
+
 with PdfPages(a.out) as pdf:
     for side, name in ((1, 'TOP'), (2, 'BOTTOM (mirrored, seen from below)')):
         fig, ax = plt.subplots(figsize=(16.5, 16.5 * H / W + 1.2))
@@ -47,8 +69,11 @@ with PdfPages(a.out) as pdf:
             if side not in p['layers']:
                 continue
             ring = p['shape'].exterior.coords if p['shape'].geom_type == 'Polygon' else p['shape'].convex_hull.exterior.coords
-            is1 = p['id'].split('.')[-1] in ('1', 'A1') and (NPADS.get(p['ref'], 0) > 2 or p['ref'].startswith(POLAR))
-            ax.add_patch(MPoly([(sx(x), y) for x, y in (mm_xy(*c) for c in ring)], fc='#d33' if is1 else '#bbb', ec='none', alpha=0.8))
+            red, label = polarity(p['ref'], p['id'].split('.')[-1])
+            ax.add_patch(MPoly([(sx(x), y) for x, y in (mm_xy(*c) for c in ring)], fc='#d33' if red else '#bbb', ec='none', alpha=0.8))
+            if label:
+                px, py = mm_xy(p['x'], p['y'])
+                ax.text(sx(px), py, label, ha='center', va='center', fontsize=9, color='white', weight='bold')
         for f in parts:
             if f['layer'] != side:
                 continue
@@ -60,6 +85,6 @@ with PdfPages(a.out) as pdf:
             fs = max(4.0, min(11.0, max(bw, bh) * PT / (0.62 * max(2, len(f['d']))), min(bw, bh) * PT * 0.9))
             ax.text(cx, cy, f['d'], ha='center', va='center', fontsize=fs, color='black', weight='bold', rotation=90 if tall else 0)
         ax.set_xlim(-1, W + 1); ax.set_ylim(H + 1, -1); ax.set_aspect('equal'); ax.axis('off')
-        ax.set_title(f"{a.title}  {name}  ({sum(1 for f in parts if f['layer'] == side)} parts; red = pin 1 of ICs / polarised parts)", fontsize=11)
+        ax.set_title(f"{a.title}  {name}  ({sum(1 for f in parts if f['layer'] == side)} parts; red = pin 1, + of electrolytics, K = cathode)", fontsize=11)
         pdf.savefig(fig, bbox_inches='tight'); plt.close(fig)
 print('wrote', a.out)

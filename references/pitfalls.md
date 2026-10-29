@@ -145,3 +145,14 @@
     short to a neighbour. Re-run DRC after every revert (`unoverlap.py --drc` does) and re-check
     `stubs.py`.
 
+34. **Clearing one overlap can thin a solder-mask dam.** Moving a 0603 0.3 mm towards its neighbour
+    passed DRC (pad-pad 6 mil) and the body check, but left 0.094 mm of mask between the two parts'
+    openings, below the fab's 0.1 mm minimum: the dam is dropped and two different nets share one
+    opening. Only `camcheck.py` sees it (`*_mask_dam_lt0.1`). Compare its report with the previous
+    export after every placement change.
+
+35. **A via in a pad is invisible to DRC, and the PCB netlist has no pin names.** The via and the pad
+    share a net, so nothing flags a drill hole inside a 0402 pad; `vias_in_pads.py` does, and
+    `dogbone.py` moves what has room. Separately, `pcb_ManufactureData.getNetlistFile()` leaves every
+    `pinInfoMap[*].name` empty; read pin names (K, A, ...) from the schematic netlist
+    (`netlist_sch.js`), as `assembly_drawing.py` does for diode cathodes.
