@@ -38,8 +38,9 @@
   - 原理图网表与 PCB 网表一致
   - 孤岛检查，悬空残线检查
   - 线宽分布、颈缩、锐角检查
+  - 器件外形（丝印）互不重叠，不只是铜不碰
   - 关闭后重开文件，证明确实保存了
-- **出生产文件**：导出 Gerber、BOM、坐标文件，再对 Gerber 和钻孔文件做**独立检查**：板边距、孔间距、焊环、阻焊桥、钢网。
+- **出生产文件**：导出 Gerber、BOM、坐标文件（可以不带丝印，另外生成装配图），再对 Gerber 和钻孔文件做**独立检查**：板边距、孔间距、焊环、阻焊桥、钢网。
 
 这套工具是在一块高密度 4 层、80 × 26 mm 的电机控制板（ESP32-S3 + BLDC 驱动）上做出来的：从改原理图一直做到 DRC 0、出生产文件。[`references/pitfalls.md`](references/pitfalls.md) 里的每一条坑都是在这块板上真实踩到的。
 
@@ -104,9 +105,9 @@ git clone https://github.com/v0id-byte/lceda-pcb-automation ~/.claude/skills/lce
 | `bin/eda.sh` | 命令行封装：`open`、`sessions`、`close`；运行 JS 文件时自动在前面加上 `CFG`、`ARGS` 和 `pcb()` |
 | `js/` | 每个脚本只做一件事：查工程、导出几何和铺铜、新建铺铜、重铺铜、DRC、导出网表、保存、更新 PCB、Gerber、BOM/坐标、拆线和挪器件、网络规则、区域规则 |
 | `lib/` | `cfg`（工程配置和单位换算）、`pcbgeo`（读几何、圆弧、孤岛）、`router`（A\*）、`check`（间距）、`eda`（执行和提交）、`camgeo`（Gerber 解析） |
-| `tools/` | `route_net` · `route_zone` · `route_order` · `manual` · `fit` · `place_route` · `move_part` · `move_via` · `gnd_fix` · `stitch` · `islands` · `stubs` · `netdiff` · `widths` · `necks` · `angles` · `render` · `cam_export` · `camcheck` · `refresh` |
+| `tools/` | `route_net` · `route_zone` · `route_order` · `manual` · `fit` · `place_route` · `move_part` · `move_via` · `gnd_fix` · `stitch` · `islands` · `stubs` · `courtyard` · `unoverlap` · `fix_overlaps` · `assembly_drawing` · `netdiff` · `widths` · `necks` · `angles` · `render` · `cam_export` · `camcheck` · `refresh` |
 | `examples/` | `ldo-breakout`：一块用脚本做出来的 2 层板，工程是嘉立创EDA的 `.eprj3` 文件夹格式，有布线前和布线后两份，附操作教程 |
-| `references/` | [`pitfalls.md`](references/pitfalls.md)：在真实板子上踩过的 26 个坑；[`api-notes.md`](references/api-notes.md)：用到的嘉立创EDA API 及其怪癖 |
+| `references/` | [`pitfalls.md`](references/pitfalls.md)：在真实板子上踩过的 33 个坑；[`api-notes.md`](references/api-notes.md)：用到的嘉立创EDA API 及其怪癖 |
 
 ## 环境要求
 

@@ -43,6 +43,17 @@ The CLI itself documents the API: `LCEDA-Pro doc api --help`.
   `getCurrentRuleConfiguration()` / `overwriteCurrentRuleConfiguration(cfg)`. Track-width classes live
   in `config.Physics.Track[name].form.data['1'] = {minValue, defaultValue, maxValue}` (mm).
 
+## Footprints and outlines
+- `eda.pcb_Primitive.getPrimitivesBBox([componentId])` → `{minX, minY, maxX, maxY}`: pads + footprint
+  silkscreen, without the designator text. Used by `js/comp_bbox.js`.
+- A footprint's own primitives (NPTH pegs as layer-12 fills, body outline on layer 48, silkscreen on 3)
+  can be read by opening it: `eda.dmt_EditorControl.openLibraryDocument(libraryUuid, '4', footprintUuid)`
+  in a separate headless session, then `pcb_PrimitivePad.getAll()`, `pcb_PrimitiveFill.getAll()`,
+  `pcb_PrimitivePolyline.getAll()`. Footprints embedded in a project (uuid `<pcb>_eNNN`) cannot be opened
+  this way. `getPrimitiveBoardLine` returned `undefined` for component silkscreen.
+- Schematic net-port names: `sch_PrimitiveAttribute.modify(attrId, {valueVisible: true})` on the port's
+  `Name` attribute.
+
 ## Images
 - Schematic: `eda.sch_ManufactureData.getPngFile()` / `getSvgFile()` (active page) → File.
 - PCB canvas (also headless): `eda.dmt_EditorControl.zoomToAllPrimitives(tabId)`, then

@@ -35,7 +35,7 @@ def run_code(code, timeout=120, args=None):
 
 def items_js(net, items, w, via=None):
     """JS lines that create planned items (('T',L,x1,y1,x2,y2[,w]) / ('V',x,y), mil) on the PCB."""
-    via = via or cfg.VIA
+    via = via or cfg.via_for(net)
     n = json.dumps(net)
     lines = ['await pcb();', 'const r=[];']
     for it in items:

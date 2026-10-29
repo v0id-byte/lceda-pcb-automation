@@ -17,5 +17,5 @@
     "edge_mil": 12,
     "strong_nets": ["VM", "12V_IN"]
   },
-  "via": { "default_mil": [12, 24] }
+  "via": { "default_mil": [12, 24], "nets": { "VM": [20, 36] } }
 }

@@ -17,7 +17,8 @@ pn = lambda c: {k: i.get('net') for k, i in c['pinInfoMap'].items()}
 print('parts', len(a), '->', len(b), ' added', sorted(set(b) - set(a)), ' removed', sorted(set(a) - set(b)))
 for d in sorted(set(a) & set(b)):
     if pn(a[d]) != pn(b[d]):
-        print(' changed', d, {k: (pn(a[d]).get(k), v) for k, v in pn(b[d]).items() if pn(a[d]).get(k) != v})
+        pa, pb = pn(a[d]), pn(b[d])   # a pin missing on one side shows as None (footprint swap)
+        print(' changed', d, {k: (pa.get(k), pb.get(k)) for k in sorted(set(pa) | set(pb)) if pa.get(k) != pb.get(k)})
 nets = {}
 for d, c in b.items():
     for k, v in pn(c).items():

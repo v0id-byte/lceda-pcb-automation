@@ -41,9 +41,10 @@ layout workflow. This repo adds that layer:
   - schematic == PCB netlist;
   - island check and dangling-stub finder;
   - width histogram, neck finder and acute-corner finder;
+  - footprint outlines kept apart (silkscreen, not just copper);
   - a save that is proven by reopening the file.
 - **Shipping:**
-  - Gerber/BOM/CPL export;
+  - Gerber/BOM/CPL export, optionally without silkscreen plus a generated assembly drawing;
   - an **independent check of the Gerber and drill files**: edge clearance, hole spacing, annular
     ring, mask dams, paste.
 
@@ -117,9 +118,9 @@ schematic editing.
 | `bin/eda.sh` | CLI wrapper: `open`, `sessions`, `close`, run a JS file with `CFG` / `ARGS` / `pcb()` prepended |
 | `js/` | one job per script: discover, export geometry and pour fills, add a pour, re-pour, DRC, netlists, save, Update PCB, Gerber, BOM/CPL, rip/move, net rules, region rules |
 | `lib/` | `cfg` (project config, units), `pcbgeo` (geometry loader, arcs, islands), `router` (A\*), `check` (clearance), `eda` (run/commit), `camgeo` (Gerber parser) |
-| `tools/` | `route_net` · `route_zone` · `route_order` · `manual` · `fit` · `place_route` · `move_part` · `move_via` · `gnd_fix` · `stitch` · `islands` · `stubs` · `netdiff` · `widths` · `necks` · `angles` · `render` · `cam_export` · `camcheck` · `refresh` |
+| `tools/` | `route_net` · `route_zone` · `route_order` · `manual` · `fit` · `place_route` · `move_part` · `move_via` · `gnd_fix` · `stitch` · `islands` · `stubs` · `courtyard` · `unoverlap` · `fix_overlaps` · `assembly_drawing` · `netdiff` · `widths` · `necks` · `angles` · `render` · `cam_export` · `camcheck` · `refresh` |
 | `examples/` | `ldo-breakout`: a scripted 2-layer board in LCEDA's `.eprj3` folder format, before and after, with a walkthrough |
-| `references/` | [`pitfalls.md`](references/pitfalls.md) (26 traps found on real boards), [`api-notes.md`](references/api-notes.md) (the LCEDA API calls used here and their quirks) |
+| `references/` | [`pitfalls.md`](references/pitfalls.md) (33 traps found on real boards), [`api-notes.md`](references/api-notes.md) (the LCEDA API calls used here and their quirks) |
 
 ## Requirements
 

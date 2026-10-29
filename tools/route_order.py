@@ -38,7 +38,7 @@ def route_one(B, net):
         if [c for c in check.conflicts(B, net, items, cfg.CLR - 0.02, a.w) if c[1] != 'pour']:
             return None
         for it in items:
-            (B.add_via(net, it[1], it[2], *cfg.VIA) if it[0] == 'V' else B.add_track(net, *it[1:6], it[6]))
+            (B.add_via(net, it[1], it[2], *cfg.via_for(net)) if it[0] == 'V' else B.add_track(net, *it[1:6], it[6]))
         out.append(items)
     return out
 

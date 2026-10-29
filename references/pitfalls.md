@@ -108,3 +108,40 @@
     a port points outward with rotation 180 on a left pin, 0 on a right pin, 270 on a top pin and
     90 on a bottom pin. Check by exporting `sch_ManufactureData.getPngFile()` and looking at it.
 
+27. **DRC passes boards whose parts sit on top of each other.** The rules only cover copper, so two
+    footprints can overlap by millimetres as long as their pads keep clearance. On one board, 30
+    pairs of silkscreen outlines overlapped at DRC 0, including a 1206 cap inside a 12 mm inductor's
+    outline. Check footprint outlines (`courtyard.py`, from `pcb_Primitive.getPrimitivesBBox`, which
+    covers pads + footprint silkscreen but not the designator text) as a separate gate. If the board
+    ships without silkscreen, bodies are what must not collide: `courtyard.py --body` estimates them
+    from the footprint names. On that board 29 of the 30 overlapping pairs turned out to be
+    silkscreen-only, and one (a 0603 under an inductor) was a real body collision.
+
+28. **Footprint pegs are holes through the whole board.** A 4×3 mm tactile switch (`…-EH` variant)
+    has two 0.9 mm NPTH pegs. Placed on the bottom under an ESP32 module, they drilled through the
+    module's pads on the top layer. DRC reports this as `Slot Region to …` errors. The exported board
+    geometry does not contain footprint holes, so read the footprint (`openLibraryDocument`, layer 12
+    fills) and give them to `place_route.py --holes`, or pick the variant without pegs.
+
+29. **DRC error positions are in units of 10 mil** (`errData.position`), not mil: multiply by 10
+    before converting to board mm.
+
+30. **A swap check that only covers the pads you routed is no swap check.** `place_route.py` used to
+    verify only the pads it had routed. When a part's pads were already connected by copper (nothing
+    to route), a mirrored 2-pad placement slipped through and EN.1 landed on the GND side. Compare
+    every pad with the plan.
+
+31. **`pcb_ManufactureData.getPdfFile` can hang an interactive session** (it may open an export dialog in
+    the user's window) and `invoke` times out after its budget. Do not call it on the user's GUI
+    session. `tools/assembly_drawing.py` draws the assembly / designator drawing from exported data.
+
+32. **One width for every pad of a moved part is wrong.** A resistor between a 25 mil power net and
+    an 8 mil signal got both routes at 25 mil, and DRC flagged the signal (class max 10 mil).
+    Pass `place_route.py --widths NET:mil,...`. Vias likewise come from the net's rule class: list
+    them in `project.json` `via.nets` (see `net_rules.js`).
+
+33. **Forced moves that are reverted are not a perfect undo.** `move_part.py --force` there and back
+    drags track ends twice; an end that left the pad on the way back stays where it was and can
+    short to a neighbour. Re-run DRC after every revert (`unoverlap.py --drc` does) and re-check
+    `stubs.py`.
+

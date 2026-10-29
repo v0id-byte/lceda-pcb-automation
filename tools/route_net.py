@@ -11,10 +11,10 @@ from shapely.ops import unary_union
 
 ap = argparse.ArgumentParser()
 ap.add_argument('net'); ap.add_argument('--w', type=float, default=8); ap.add_argument('--clr', type=float, default=cfg.CLR)
-ap.add_argument('--via', default=','.join(map(str, cfg.VIA))); ap.add_argument('--layers')
+ap.add_argument('--via', help='hole,dia mil (default: per-net from project.json via.nets)'); ap.add_argument('--layers')
 ap.add_argument('--commit', action='store_true'); ap.add_argument('--all', action='store_true', help='with --commit: repeat until one island')
 a = ap.parse_args()
-V = tuple(float(v) for v in a.via.split(','))
+V = tuple(float(v) for v in a.via.split(',')) if a.via else cfg.via_for(a.net)
 Ls = tuple(int(x) for x in a.layers.split(',')) if a.layers else cfg.ROUTE_LAYERS
 def once():
     B = router.Board()

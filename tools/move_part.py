@@ -1,8 +1,9 @@
-"""move_part.py DESIGNATOR dx,dy (mm) [--commit]
+"""move_part.py DESIGNATOR dx,dy (mm) [--commit [--force]]
 
 Translate a placed part and drag the end points of every track that ends inside one of its pads, so
-the connections survive. Everything moved is clearance-checked first (pads included). For bigger moves
-rip and re-route instead.
+the connections survive. Everything moved is clearance-checked first (pads included). The check uses
+the single clearance from project.json, which can be stricter than the board's rule matrix: --force
+commits anyway, so let DRC decide (unoverlap.py --drc does that). For bigger moves rip and re-route.
 """
 import argparse, json
 import _boot  # noqa: F401
@@ -10,7 +11,7 @@ import cfg, router, check, eda
 from shapely import affinity
 from shapely.geometry import Point
 
-ap = argparse.ArgumentParser(); ap.add_argument('des'); ap.add_argument('d'); ap.add_argument('--commit', action='store_true')
+ap = argparse.ArgumentParser(); ap.add_argument('des'); ap.add_argument('d'); ap.add_argument('--commit', action='store_true'); ap.add_argument('--force', action='store_true')
 a = ap.parse_args()
 dx, dy = map(float, a.d.split(',')); DX, DY = dx * cfg.MIL, -dy * cfg.MIL
 B = router.Board(); objs = B.all_objs()
@@ -40,7 +41,7 @@ for t, c in moved:
     if cf:
         bad += 1; print('TRACK', t['net'], [x[1:4] + (x[5],) for x in cf[:3]])
 print(a.des, 'pads', len(pads), 'tracks dragged', len(moved), 'conflicts', bad)
-if a.commit and not bad:
+if a.commit and (not bad or a.force):
     c0 = [x for x in B.g['comps'] if x['d'] == a.des][0]
     js = ['await pcb();', f'const C=eda.pcb_PrimitiveComponent; await C.modify({json.dumps(c0["id"])},{{x:{c0["x"] + DX:.4f},y:{c0["y"] + DY:.4f}}});', 'const r=[];']
     for t, c in moved:

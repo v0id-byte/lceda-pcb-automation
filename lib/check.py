@@ -13,7 +13,7 @@ def conflicts(B, net, items, clr, w, via=None, rip=(), edge=None, via_thru_pour=
     `via_thru_pour` are ignored for vias for the same reason.
     Each result is (item head, kind, id, net, layers, distance_mil) or (item head, 'EDGE').
     """
-    via = via or cfg.VIA
+    via = via or cfg.via_for(net)
     edge = cfg.EDGE if edge is None else edge
     rip = set(rip)
     objs = [o for o in B.all_objs() if o['id'] not in rip]

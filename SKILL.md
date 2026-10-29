@@ -47,6 +47,8 @@ Write `$LCEDA_WORK/project.json` from `examples/project.example.json`:
 - `layers.copper`: copper layer ids (1 top, 2 bottom, 15… inner). `planes`: inner layers flooded with
   ground. `route`: default routing layers; keep plane layers out unless you must, because every track
   on a plane layer cuts the plane.
+- `via`: `default_mil` = [hole, diameter], and `nets` for nets whose rule class needs bigger vias
+  (`net_rules.js` shows the via class per net; the router and every commit use the per-net size).
 - `clearance`: base rule, plus the larger rule and the list of nets it applies to. Read them with
   `bin/eda.sh js/net_rules.js`. Track-to-track and track-to-via can differ per class, so check the matrix.
 
@@ -79,6 +81,14 @@ or new name. Find them in `geom.json` and rip them with `js/rip_move.js`.
 - Decoupling caps go first, as close as the pins allow. Check the pin-to-cap path length, not just
   the centre distance.
 - Moving a part to the other side mirrors its pads. Re-read the pad positions that `rip_move.js` returns.
+- **Parts must be separated by their footprint outlines (pads + silkscreen), not by pad clearance.**
+  DRC only checks copper. `tools/courtyard.py` lists overlapping footprints, `tools/unoverlap.py`
+  nudges a small part clear (dragging its track ends), and `place_route.py` keeps candidates
+  outside other parts' outlines (`fit.py` only uses pad extents + a margin). Run `courtyard.py` after every placement batch.
+  `tools/fix_overlaps.py` works through the overlap list automatically and reports what it could not move.
+- A footprint with NPTH pegs or slots (some tactile switches, connectors) drills through every layer.
+  Pass them to `place_route.py --holes dx,dy,dia;...`; read them from the footprint with
+  `openLibraryDocument` (see `references/api-notes.md`).
 
 ## 5. Routing loop
 
@@ -126,11 +136,12 @@ Floating ground almost always has one of these causes:
 | DRC, rules untouched | `eda.sh js/drc.js 600` | `"sum": {}` |
 | Schematic == PCB | `netdiff.py sch.json pcb.json` | no changes, no single-pin nets |
 | Intent | `netdiff.py base_sch.json sch.json` | only the planned changes |
+| Footprints apart | `courtyard.py` (`--body --gap 0.1` if no silkscreen) | no overlapping pairs: parts on one side are separated by their **silkscreen outlines** (or bodies), not just by pad clearance (pitfalls #27) |
 | Connectivity | `islands.py`, `stubs.py` | only the known false splits (see pitfalls #6); every dangling end explained |
 | Widths | `widths.py`, `necks.py NET:mil` | power nets meet their current; necks only at pins |
 | Corners | `angles.py` | no acute corners from your own routing |
 | Saved | `eda.sh js/save_all.js`, `eda.sh close destroy`, reopen, re-read one change | the change is there after reopening (pitfalls #8) |
-| CAM | `cam_export.py OUT`, `camcheck.py OUT/gerber` | no copper at the edge, hole spacing and rings OK |
+| CAM | `cam_export.py OUT [--no-silk]`, `camcheck.py OUT/gerber`, `assembly_drawing.py OUT/assembly.pdf` | no copper at the edge, hole spacing and rings OK; assembly drawing readable |
 
 Then snapshot the `.eprj2` together with `drc.json`, both netlists and `geom.json`, and have an
 **independent reviewer** (a fresh agent) check the exported data read-only: datasheet limits,
@@ -143,7 +154,7 @@ decoupling, current paths, BOM stock and price, assembly sides.
   import_changes, netlist_sch, netlist_pcb, gerber, bom_cpl, rip_move, net_rules, region_track_rule).
 - `lib/`: `cfg`, `pcbgeo` (geometry loader + islands), `router` (A*), `check` (clearance), `eda`
   (run/commit), `camgeo` (Gerber parser).
-- `tools/`: the commands above, plus `route_order.py` (try net orders in memory), `place_route.py`
+- `tools/`: the commands above, plus `courtyard.py` / `unoverlap.py` / `fix_overlaps.py` (footprint overlaps), `assembly_drawing.py`, `route_order.py` (try net orders in memory), `place_route.py`
   (placement that must also route), `stubs.py` (dangling track ends), `move_via.py` / `move_part.py` (nudge copper and drag attached
   track ends, clearance-checked) for clearing a corridor.
 - `examples/ldo-breakout/`: a complete 2-layer run (`.eprj3` before/after + walkthrough). Use it to

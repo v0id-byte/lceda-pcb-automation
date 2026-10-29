@@ -39,6 +39,11 @@ CLR_STRONG = CFG['clearance'].get('strong_mil', CLR)
 STRONG = set(CFG['clearance'].get('strong_nets', []))  # nets whose rule class asks for CLR_STRONG
 EDGE = CFG['clearance'].get('edge_mil', 12)
 VIA = tuple(CFG.get('via', {}).get('default_mil', [12, 24]))  # (hole, diameter)
+VIA_NETS = {n: tuple(v) for n, v in CFG.get('via', {}).get('nets', {}).items()}  # nets whose rule class needs bigger vias
+
+
+def via_for(net):
+    return VIA_NETS.get(net, VIA)
 
 
 def X(x_mm):
