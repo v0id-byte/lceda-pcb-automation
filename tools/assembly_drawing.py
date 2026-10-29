@@ -2,13 +2,13 @@
 
 For boards ordered without silkscreen (or with silkscreen too dense to read): board outline, every
 footprint outline (pads + footprint silkscreen extent, from js/comp_bbox.js), pads, polarity in red
-(pin 1 of ICs and connectors, '+' on electrolytic caps, 'K' on the cathode of any pin named K;
-bidirectional '-BI' footprints get none), and the designator in the middle of each part. The bottom page is mirrored, as seen from the bottom.
+(rules in lib/polarity.py: pin 1, '+' on electrolytic caps, 'K' on cathodes), and the designator in
+the middle of each part. The bottom page is mirrored, as seen from the bottom.
 Needs a fresh geom.json (tools/refresh.py).
 """
-import argparse, json
+import argparse
 import _boot  # noqa: F401
-import cfg, eda, pcbgeo
+import cfg, eda, pcbgeo, polarity
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -21,14 +21,6 @@ r = eda.run('comp_bbox.js', 300)
 if not r.get('success'):
     raise SystemExit(f"comp_bbox.js failed: {r.get('error')}")
 parts = r['result']
-nl = eda.run('netlist_sch.js', 120)   # the PCB netlist leaves pin names empty
-if not nl.get('success'):
-    raise SystemExit(f"netlist_sch.js failed: {nl.get('error')}")
-t = json.loads(nl['result']['text'])
-PIN = {(c['props'].get('Designator'), n): (v.get('name') or '').upper()
-       for c in t['components'].values() if isinstance(c, dict) and 'props' in c for n, v in c.get('pinInfoMap', {}).items()}
-FP = {f['d']: f['fp'] for f in parts}
-HAS_K = {d for (d, n), name in PIN.items() if name in ('K', 'CATHODE')}
 g, objs = pcbgeo.load()
 pads = [o for o in objs if o['kind'] == 'pad' and o.get('ref') not in (None, '__SLOT')]
 W, H = cfg.SIZE_MM
@@ -39,23 +31,8 @@ def mm_xy(x, y):
 
 
 PT = 16.5 * 72 / W   # points per mm on the page
-POLAR = ('U', 'Q', 'D', 'LED', 'J', 'CN', 'SW')
-NPADS = {}
-for p in pads:
-    NPADS[p['ref']] = NPADS.get(p['ref'], 0) + 1
+R = polarity.Rules(parts, pads)
 
-
-def polarity(ref, n):
-    """(red?, label) for one pad. LCSC electrolytic footprints (CAP-SMD_BD...) put + on pin 1."""
-    fp = FP.get(ref, '')
-    if fp.endswith('-BI'):
-        return False, ''
-    if fp.startswith('CAP-SMD_BD'):
-        return n == '1', '+' if n == '1' else ''
-    if ref in HAS_K:
-        k = PIN.get((ref, n)) in ('K', 'CATHODE')
-        return k, 'K' if k else ''
-    return n in ('1', 'A1') and (NPADS.get(ref, 0) > 2 or ref.startswith(POLAR)), ''
 
 with PdfPages(a.out) as pdf:
     for side, name in ((1, 'TOP'), (2, 'BOTTOM (mirrored, seen from below)')):
@@ -69,8 +46,9 @@ with PdfPages(a.out) as pdf:
             if side not in p['layers']:
                 continue
             ring = p['shape'].exterior.coords if p['shape'].geom_type == 'Polygon' else p['shape'].convex_hull.exterior.coords
-            red, label = polarity(p['ref'], p['id'].split('.')[-1])
-            ax.add_patch(MPoly([(sx(x), y) for x, y in (mm_xy(*c) for c in ring)], fc='#d33' if red else '#bbb', ec='none', alpha=0.8))
+            m = R.mark(p['ref'], p['id'].split('.')[-1])
+            label = m if m in ('+', 'K') else ''
+            ax.add_patch(MPoly([(sx(x), y) for x, y in (mm_xy(*c) for c in ring)], fc='#d33' if m else '#bbb', ec='none', alpha=0.8))
             if label:
                 px, py = mm_xy(p['x'], p['y'])
                 ax.text(sx(px), py, label, ha='center', va='center', fontsize=9, color='white', weight='bold')

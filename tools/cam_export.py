@@ -2,7 +2,7 @@
 
 LCEDA's zip stores Chinese member names in GBK without the UTF-8 flag; they are re-decoded here.
 --no-silk leaves the silkscreen layers (GTO/GBO) out of the zip, for a board ordered without
-silkscreen; pair it with assembly_drawing.py. Afterwards run camcheck.py OUT_DIR/gerber."""
+silkscreen; pair it with assembly_drawing.py, and with polarity_silk.py if the fab should still see polarity marks. Afterwards run camcheck.py OUT_DIR/gerber."""
 import argparse, base64, io, json, os, zipfile
 import _boot  # noqa: F401
 import eda

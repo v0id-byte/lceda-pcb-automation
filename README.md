@@ -118,7 +118,7 @@ schematic editing.
 | `bin/eda.sh` | CLI wrapper: `open`, `sessions`, `close`, run a JS file with `CFG` / `ARGS` / `pcb()` prepended |
 | `js/` | one job per script: discover, export geometry and pour fills, add a pour, re-pour, DRC, netlists, save, Update PCB, Gerber, BOM/CPL, rip/move, net rules, region rules |
 | `lib/` | `cfg` (project config, units), `pcbgeo` (geometry loader, arcs, islands), `router` (A\*), `check` (clearance), `eda` (run/commit), `camgeo` (Gerber parser) |
-| `tools/` | `route_net` · `route_zone` · `route_order` · `manual` · `fit` · `place_route` · `move_part` · `move_via` · `gnd_fix` · `stitch` · `islands` · `stubs` · `courtyard` · `unoverlap` · `fix_overlaps` · `assembly_drawing` · `vias_in_pads` · `dogbone` · `netdiff` · `widths` · `necks` · `angles` · `render` · `cam_export` · `camcheck` · `refresh` |
+| `tools/` | `route_net` · `route_zone` · `route_order` · `manual` · `fit` · `place_route` · `move_part` · `move_via` · `gnd_fix` · `stitch` · `islands` · `stubs` · `courtyard` · `unoverlap` · `fix_overlaps` · `assembly_drawing` · `polarity_silk` · `vias_in_pads` · `dogbone` · `netdiff` · `widths` · `necks` · `angles` · `render` · `cam_export` · `camcheck` · `refresh` |
 | `examples/` | `ldo-breakout`: a scripted 2-layer board in LCEDA's `.eprj3` folder format, before and after, with a walkthrough |
 | `references/` | [`pitfalls.md`](references/pitfalls.md) (35 traps found on real boards), [`api-notes.md`](references/api-notes.md) (the LCEDA API calls used here and their quirks) |
 
