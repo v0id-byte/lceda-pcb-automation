@@ -46,7 +46,7 @@
 ## 流程
 
 ```mermaid
-flowchart LR
+flowchart TD
     A[打开工程<br/>discover] --> B[建基线<br/>网表 · DRC · 几何]
     B --> C[板外规划<br/>fit · route · route_order]
     C --> D{间距预检}

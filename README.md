@@ -54,7 +54,7 @@ from schematic changes to DRC 0 and fab files. Every entry in
 ## Workflow
 
 ```mermaid
-flowchart LR
+flowchart TD
     A[open project<br/>discover] --> B[baseline<br/>netlist · DRC · geometry]
     B --> C[plan off-board<br/>fit · route · route_order]
     C --> D{pre-check<br/>clearance}
