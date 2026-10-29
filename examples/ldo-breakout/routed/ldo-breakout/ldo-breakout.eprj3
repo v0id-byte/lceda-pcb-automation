@@ -1,0 +1,96 @@
+{
+  "name": "ldo-breakout",
+  "owner_uuid": "00000000000000000000000000000000",
+  "creator_uuid": "00000000000000000000000000000000",
+  "created_at": "2026-10-29 08:23:55",
+  "updated_at": "2026-10-29 08:23:55",
+  "modifier_uuid": "00000000000000000000000000000000",
+  "content": "lceda-pcb-automation example: USB-C 5V to 3.3V LDO breakout, 2 layers",
+  "archive": false,
+  "cbb_project": 0,
+  "thumb": "",
+  "ticket": 1,
+  "g_ticket": 1,
+  "boards": [],
+  "block_symbol_attrs_groups": {},
+  "default_sheet": "c4b8ce9d6fcae8ec",
+  "branch_uuid": "",
+  "pcb_count": 0,
+  "format": "folder",
+  "profile": {
+    "boards": {
+      "6556cefadfa9c72c": {
+        "uuid": "6556cefadfa9c72c",
+        "title": "Board1",
+        "zIndex": 1
+      }
+    },
+    "schematics": {
+      "f4b9d5293de63de0": {
+        "uuid": "f4b9d5293de63de0",
+        "name": "Schematic1",
+        "board": "6556cefadfa9c72c",
+        "source": "",
+        "version": "1793233840550",
+        "updateTime": 1793233840550
+      }
+    },
+    "sheets": {
+      "c7a1bf1857e7eb3b": {
+        "uuid": "c7a1bf1857e7eb3b",
+        "title": "P1",
+        "schematic_uuid": "f4b9d5293de63de0",
+        "zIndex": 1,
+        "source": "",
+        "version": "1793233840550",
+        "updateTime": 1793233840550
+      }
+    },
+    "pcbs": {
+      "6d25130a6cea9c1e": {
+        "uuid": "6d25130a6cea9c1e",
+        "title": "PCB1",
+        "board": "6556cefadfa9c72c",
+        "parent_uuid": "",
+        "source": "",
+        "version": "1793234510497",
+        "updateTime": 1793234510497
+      }
+    },
+    "panels": {
+      "a8ca19ea23767e56": {
+        "uuid": "a8ca19ea23767e56",
+        "title": "Panel1",
+        "zIndex": null
+      }
+    },
+    "blockSymbols": {},
+    "owner": {
+      "uuid": "00000000000000000000000000000000"
+    },
+    "simSchematics": {},
+    "simulations": {}
+  },
+  "config": {
+    "defaultSheet": "c4b8ce9d6fcae8ec",
+    "settings": {
+      "UNIVERSAL": {
+        "dataType": "UNIVERSAL",
+        "data": {
+          "allowLibRename": true,
+          "defaultNetName": true,
+          "wireMultipleNet": true,
+          "netFlagCrossLayerConnection": true,
+          "netLabelCrossPageConnection": true,
+          "busGenerateNetClass": true,
+          "relevanceDisplayRow": "SINGLE",
+          "relevanceBelongSchPage": "NAME",
+          "relevanceLocation": "ZONE",
+          "multipartCrossLayer": true,
+          "nonElectronicAddIntoBom": false,
+          "nonElectronicUpdatePcb": false
+        }
+      }
+    }
+  }
+}

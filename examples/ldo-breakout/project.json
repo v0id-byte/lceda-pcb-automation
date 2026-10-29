@@ -1,0 +1,43 @@
+{
+ "project_uuid": "<filled in by eda.sh open>",
+ "pcb_doc": "6d25130a6cea9c1e",
+ "sch_pages": [
+  "c7a1bf1857e7eb3b"
+ ],
+ "board": {
+  "origin_mil": [
+   0,
+   0
+  ],
+  "size_mm": [
+   30.0,
+   20.0
+  ],
+  "keepouts_mm": [],
+  "slots_mm": []
+ },
+ "layers": {
+  "copper": [
+   1,
+   2
+  ],
+  "planes": [],
+  "route": [
+   1,
+   2
+  ]
+ },
+ "gnd_net": "GND",
+ "clearance": {
+  "default_mil": 6,
+  "strong_mil": 6,
+  "edge_mil": 12,
+  "strong_nets": []
+ },
+ "via": {
+  "default_mil": [
+   12,
+   24
+  ]
+ }
+}

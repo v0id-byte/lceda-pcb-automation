@@ -92,3 +92,19 @@
 23. **A tool that reports "dangling" must probe with the real copper.** A track end is a round cap of
     radius w/2, not a point. Probing the bare point flags ends that stop a few mil short of a via or
     a pour. `stubs.py` uses the cap.
+
+24. **`.eprj3` folder projects sync both ways, and every open gets a new project uuid.** The editor
+    writes edits straight back into the folder, so open a copy, never a checked-in project. The new
+    uuid breaks `pcb()` (`activateDocument(pcb@project)`). `eda.sh open` writes the current uuid
+    into `project.json`.
+
+25. **Some library lookups come back empty.** In 4.1.78 `lib_Device.getByLcscIds([...])` returned
+    `[]` for parts that exist. `lib_Device.search('C6186', …)` finds them: keep the hit whose
+    `supplierId` matches exactly, then `lib_Device.get(uuid)` for the real `libraryUuid`.
+
+26. **New schematic net ports hide their name, and up/down rotations are easy to get backwards.**
+    `createNetPort` leaves the `Name` attribute at `valueVisible: false`. Set it with
+    `sch_PrimitiveAttribute.modify(id, {valueVisible: true})`. The schematic's Y axis points up, and
+    a port points outward with rotation 180 on a left pin, 0 on a right pin, 270 on a top pin and
+    90 on a bottom pin. Check by exporting `sch_ManufactureData.getPngFile()` and looking at it.
+

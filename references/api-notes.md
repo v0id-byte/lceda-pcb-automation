@@ -12,12 +12,21 @@ The CLI itself documents the API: `LCEDA-Pro doc api --help`.
   function body; `return` gives `value`. The output is `{"ok", "value", "error", "logs", "durationMs"}`.
 
 ## Documents
+- `eda.dmt_Project.createProject(friendlyName, name)` → project uuid. It defaults to the `.eprj3`
+  folder format under `~/Documents/LCEDA-Pro/projects/`. Open the result with `eda.sh open`.
+  `eda.dmt_Board.createBoard()` adds a schematic + PCB pair. A newly opened project already has
+  `Board1`. `dmt_Pcb.deletePcb(uuid)` / `dmt_Schematic.deleteSchematic(uuid)` remove orphans.
 - `eda.dmt_Project.getCurrentProjectInfo()` → boards, schematic pages, PCB uuids.
 - `eda.dmt_EditorControl.openDocument(uuid)` and `waitForDocumentReady()`; a PCB is activated with
   `activateDocument(pcbUuid + '@' + projectUuid)`.
 - `eda.sch_Document.save()`, `eda.pcb_Document.save(pcbUuid)`, `eda.pcb_Document.importChanges(pcbUuid, true)`.
 
 ## PCB primitives (unit: mil, Y up)
+- Board outline: `eda.pcb_PrimitivePolyline.create('', 11, eda.pcb_MathPolygon.createPolygon([x0, y0, 'L', x1, y0, …]), 10, false)`
+  (layer 11 = board outline).
+- Designators are `eda.pcb_PrimitiveAttribute` objects with `key == 'Designator'` and
+  `parentPrimitiveId` = the component. `modify(id, {x, y, rotation, fontSize, alignMode: 5})`
+  moves them off pads.
 - `eda.pcb_PrimitiveComponent`: `getAllPrimitiveId()`, `get(id)` (designator, layer, x, y, rotation),
   `getAllPinsByPrimitiveId(id)` (padNumber, net, x, y, layer, rotation, pad = [shape, w, h…], hole),
   `modify(id, {x, y, rotation, layer})`.
@@ -33,6 +42,12 @@ The CLI itself documents the API: `LCEDA-Pro doc api --help`.
 - `getNetRules()`, `getRegionRules()` / `overwriteRegionRules(list)`,
   `getCurrentRuleConfiguration()` / `overwriteCurrentRuleConfiguration(cfg)`. Track-width classes live
   in `config.Physics.Track[name].form.data['1'] = {minValue, defaultValue, maxValue}` (mm).
+
+## Images
+- Schematic: `eda.sch_ManufactureData.getPngFile()` / `getSvgFile()` (active page) → File.
+- PCB canvas (also headless): `eda.dmt_EditorControl.zoomToAllPrimitives(tabId)`, then
+  `getCurrentRenderedAreaImage(tabId)` → PNG Blob. `tabId` is `pcbUuid + '@' + projectUuid`.
+  Return binary data from `invoke` as base64.
 
 ## Manufacturing
 - `eda.pcb_ManufactureData.getGerberFile(name)` → File (zip). `getBomFile()` and `getPickAndPlaceFile()`

@@ -84,7 +84,7 @@ or new name. Find them in `geom.json` and rip them with `js/rip_move.js`.
 
 ```bash
 python tools/route_net.py NET --w 8                 # dry run: prints the path in mm + conflicts
-python tools/route_net.py NET --w 8 --commit && python tools/refresh.py
+python tools/route_net.py NET --w 8 --commit --all   # commit + refresh, repeat until one island
 python tools/route_zone.py NET x0,y0,x1,y1 --commit # dense area: search only inside the zone
 python tools/manual.py plan.json [--commit]         # hand-drawn copper, same clearance pre-check
 ```
@@ -103,6 +103,7 @@ python tools/manual.py plan.json [--commit]         # hand-drawn copper, same cl
 ## 6. Pours and ground
 
 ```bash
+bin/eda.sh js/add_pour.js 120 '{"net": "GND", "layers": [1, 2]}'   # board-sized pour, if there is none
 python tools/refresh.py --rebuild
 python tools/islands.py GND                 # floating ground pads after the re-pour
 python tools/render.py x0,y0,x1,y1 15,16 out.png --islands GND   # red = cut-off plane pocket
@@ -138,12 +139,14 @@ decoupling, current paths, BOM stock and price, assembly sides.
 ## 8. Files
 
 - `bin/eda.sh`: CLI wrapper (open / sessions / close / run JS).
-- `js/`: one job per script (discover, export_geom, export_poured, rebuild_pours, drc, save_all,
+- `js/`: one job per script (discover, export_geom, export_poured, add_pour, rebuild_pours, drc, save_all,
   import_changes, netlist_sch, netlist_pcb, gerber, bom_cpl, rip_move, net_rules, region_track_rule).
 - `lib/`: `cfg`, `pcbgeo` (geometry loader + islands), `router` (A*), `check` (clearance), `eda`
   (run/commit), `camgeo` (Gerber parser).
 - `tools/`: the commands above, plus `route_order.py` (try net orders in memory), `place_route.py`
   (placement that must also route), `stubs.py` (dangling track ends), `move_via.py` / `move_part.py` (nudge copper and drag attached
   track ends, clearance-checked) for clearing a corridor.
+- `examples/ldo-breakout/`: a complete 2-layer run (`.eprj3` before/after + walkthrough). Use it to
+  check a new machine or editor version: the walkthrough must end at DRC 0.
 - `references/pitfalls.md`: read it before the first commit on a new board.
 - `references/api-notes.md`: the LCEDA API calls used here, with their quirks.

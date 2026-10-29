@@ -51,6 +51,15 @@ It was built while taking a dense 4-layer, 80 × 26 mm motor-controller board (E
 from schematic changes to DRC 0 and fab files. Every entry in
 [`references/pitfalls.md`](references/pitfalls.md) actually happened on that board.
 
+## Example
+
+[`examples/ldo-breakout`](examples/ldo-breakout) is a 2-layer USB-C → 3.3 V LDO board. It goes from
+placed-but-unrouted to DRC 0 and checked Gerbers with about 25 commands, in about 1.5 minutes.
+
+| Start: placed, ratsnest only | After the walkthrough: DRC 0 |
+|---|---|
+| ![placed](examples/ldo-breakout/images/placed.png) | ![routed](examples/ldo-breakout/images/routed.png) |
+
 ## Workflow
 
 ```mermaid
@@ -83,10 +92,12 @@ bin/eda.sh js/netlist_sch.js > sch.json && bin/eda.sh js/netlist_pcb.js > pcb.js
 .venv/bin/python tools/refresh.py --rebuild            # re-pour, export geometry
 bin/eda.sh js/drc.js 600                               # "sum": {} means clean
 .venv/bin/python tools/route_net.py SOME_NET --w 8     # dry run: path in mm + conflicts
+.venv/bin/python tools/route_net.py SOME_NET --w 8 --commit --all
 bin/eda.sh close destroy
 ```
 
 The full workflow, the routing loop and the verification gates are in [`SKILL.md`](SKILL.md).
+For a complete run on a real (small) board, follow the [example](examples/ldo-breakout).
 
 ### Use it as an agent skill
 
@@ -104,10 +115,11 @@ schematic editing.
 | Path | What |
 |---|---|
 | `bin/eda.sh` | CLI wrapper: `open`, `sessions`, `close`, run a JS file with `CFG` / `ARGS` / `pcb()` prepended |
-| `js/` | one job per script: discover, export geometry and pour fills, re-pour, DRC, netlists, save, Update PCB, Gerber, BOM/CPL, rip/move, net rules, region rules |
+| `js/` | one job per script: discover, export geometry and pour fills, add a pour, re-pour, DRC, netlists, save, Update PCB, Gerber, BOM/CPL, rip/move, net rules, region rules |
 | `lib/` | `cfg` (project config, units), `pcbgeo` (geometry loader, arcs, islands), `router` (A\*), `check` (clearance), `eda` (run/commit), `camgeo` (Gerber parser) |
 | `tools/` | `route_net` · `route_zone` · `route_order` · `manual` · `fit` · `place_route` · `move_part` · `move_via` · `gnd_fix` · `stitch` · `islands` · `stubs` · `netdiff` · `widths` · `necks` · `angles` · `render` · `cam_export` · `camcheck` · `refresh` |
-| `references/` | [`pitfalls.md`](references/pitfalls.md) (23 traps found on real boards), [`api-notes.md`](references/api-notes.md) (the LCEDA API calls used here and their quirks) |
+| `examples/` | `ldo-breakout`: a scripted 2-layer board in LCEDA's `.eprj3` folder format, before and after, with a walkthrough |
+| `references/` | [`pitfalls.md`](references/pitfalls.md) (26 traps found on real boards), [`api-notes.md`](references/api-notes.md) (the LCEDA API calls used here and their quirks) |
 
 ## Requirements
 

@@ -75,8 +75,11 @@ for side,ms,cl,sl,pa in (('top','Gerber_TopSolderMaskLayer.GTS','L1','Gerber_Top
             if d<0.09: exp.append((round(d,3),bx(*p.centroid.coords[0])))
         if len(own)>1: exp.append(('multi-copper-in-opening',bx(*p.centroid.coords[0])))
     R[side+'_mask_to_other_cu']={'n':len(exp),'ex':exp[:12]}
-    sg,_=camgeo.load(C+sl); onpad=sg.intersection(mg); R[side+'_silk_on_mask_open']={'area_mm2':round(onpad.area,3),'n':len(polys(onpad)),'ex':[bx(*q.centroid.coords[0]) for q in sorted(polys(onpad),key=lambda q:-q.area)[:12]]}
-    off=sg.difference(B); R[side+'_silk_off_board']={'area':round(off.area,3),'ex':[bx(*q.centroid.coords[0]) for q in polys(off)][:8]}
-    pg,_=camgeo.load(C+pa); pout=pg.difference(cg.buffer(0.001)); R[side+'_paste_off_copper']={'area':round(pout.area,4),'ex':[bx(*q.centroid.coords[0]) for q in polys(pout) if q.area>1e-4][:8]}
-    R[side+'_paste_openings']=len(polys(pg)); R[side+'_mask_openings']=len(op)
+    if os.path.exists(C+sl):  # a side without silkscreen / paste (single-sided assembly) has no file
+        sg,_=camgeo.load(C+sl); onpad=sg.intersection(mg); R[side+'_silk_on_mask_open']={'area_mm2':round(onpad.area,3),'n':len(polys(onpad)),'ex':[bx(*q.centroid.coords[0]) for q in sorted(polys(onpad),key=lambda q:-q.area)[:12]]}
+        off=sg.difference(B); R[side+'_silk_off_board']={'area':round(off.area,3),'ex':[bx(*q.centroid.coords[0]) for q in polys(off)][:8]}
+    pg=None
+    if os.path.exists(C+pa):
+        pg,_=camgeo.load(C+pa); pout=pg.difference(cg.buffer(0.001)); R[side+'_paste_off_copper']={'area':round(pout.area,4),'ex':[bx(*q.centroid.coords[0]) for q in polys(pout) if q.area>1e-4][:8]}
+    R[side+'_paste_openings']=len(polys(pg)) if pg is not None else 0; R[side+'_mask_openings']=len(op)
 json.dump(R,open(C.rstrip('/')+'_report.json','w'),ensure_ascii=False,indent=1,default=str); print(json.dumps(R,ensure_ascii=False,indent=1,default=str))

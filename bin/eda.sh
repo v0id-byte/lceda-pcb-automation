@@ -1,7 +1,8 @@
 #!/bin/bash
 # LCEDA Pro (嘉立创EDA专业版) CLI wrapper.
 #
-#   eda.sh open <project.eprj2> [headless]   open a project, save its session id to $LCEDA_WORK/sid.txt
+#   eda.sh open <project> [headless]         open a project (.eprj2 / .eprj3), save its session id to $LCEDA_WORK/sid.txt
+#                                            and update project_uuid in $LCEDA_WORK/project.json
 #   eda.sh sessions                          list editor sessions
 #   eda.sh close [destroy]                   end the session in sid.txt (destroy = also close its window)
 #   eda.sh <file.js> [timeout_s] [args_json] run a JS file in the session; prints {"success","result","error"}
@@ -26,6 +27,17 @@ import sys, json
 d = json.load(sys.stdin); v = d.get("value", d)
 print(v if isinstance(v, str) else (v.get("sessionId") or v.get("session") or ""))')
     [ -n "$sid" ] && echo "$sid" > "$WORK/sid.txt" && echo "session $sid -> $WORK/sid.txt"
+    # every open (and every copy) of a project gets a new project uuid: keep project.json in step
+    if [ -n "$sid" ] && [ -f "$WORK/project.json" ]; then
+      F=$(mktemp "${TMPDIR:-/tmp}/eda.XXXXXX")
+      echo 'for (let i = 0; i < 20; i++) { try { const p = await eda.dmt_Project.getCurrentProjectInfo(); if (p && p.uuid) return p.uuid; } catch (e) {} await new Promise(r => setTimeout(r, 500)); } return null;' > "$F"
+      "$BIN" invoke --session "$sid" --code-file "$F" --timeout 60000 | python3 -c '
+import sys, json
+u = json.load(sys.stdin).get("value"); p = sys.argv[1]; c = json.load(open(p))
+if u and c.get("project_uuid") != u:
+    c["project_uuid"] = u; json.dump(c, open(p, "w"), indent=1, ensure_ascii=False); print("project.json: project_uuid ->", u)' "$WORK/project.json"
+      rm -f "$F"
+    fi
     exit 0 ;;
   sessions)
     "$BIN" session list; exit 0 ;;
