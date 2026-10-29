@@ -3,12 +3,13 @@
 #
 #   eda.sh open <project.eprj2> [headless]   open a project, save its session id to $LCEDA_WORK/sid.txt
 #   eda.sh sessions                          list editor sessions
+#   eda.sh close [destroy]                   end the session in sid.txt (destroy = also close its window)
 #   eda.sh <file.js> [timeout_s] [args_json] run a JS file in the session; prints {"success","result","error"}
 #
 # The JS runs as an async function body (top-level await, `return` = result) with these prepended:
 #   CFG    contents of $LCEDA_WORK/project.json
 #   ARGS   the args_json argument (or {})
-#   pcb()  activates the PCB document named in CFG (call it before pcb_* APIs)
+#   pcb()  opens (if needed) and activates the PCB document named in CFG; call it before pcb_* APIs
 # "success": true only means the code ran. Validate the business result yourself (re-read, netlist, DRC).
 set -e
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -28,6 +29,9 @@ print(v if isinstance(v, str) else (v.get("sessionId") or v.get("session") or ""
     exit 0 ;;
   sessions)
     "$BIN" session list; exit 0 ;;
+  close)
+    "$BIN" session close --session "${LCEDA_SID:-$(cat "$WORK/sid.txt")}" ${2:+--destroy true}
+    rm -f "$WORK/sid.txt"; exit 0 ;;
 esac
 
 SID=${LCEDA_SID:-$(cat "$WORK/sid.txt" 2>/dev/null)}
@@ -40,7 +44,8 @@ F=$(mktemp "${TMPDIR:-/tmp}/eda.XXXXXX")
 {
   echo "const CFG=$CFGJSON;"
   echo "const ARGS=${ARGS_JSON};"
-  echo "async function pcb(){ if(CFG.pcb_doc) await eda.dmt_EditorControl.activateDocument(CFG.pcb_doc+'@'+CFG.project_uuid); }"
+  # activate the PCB; in a freshly opened project (or headless) it is not open yet, so open it first
+  echo "async function pcb(){ if(!CFG.pcb_doc) return; const ed=eda.dmt_EditorControl, id=CFG.pcb_doc+'@'+CFG.project_uuid; let ok=false; try{ ok=await ed.activateDocument(id); }catch(e){} if(ok) return; await ed.openDocument(CFG.pcb_doc); try{ await ed.waitForDocumentReady(); }catch(e){} if(!await ed.activateDocument(id)) throw new Error('cannot open PCB '+CFG.pcb_doc+' (check project.json pcb_doc / project_uuid)'); }"
   cat "$1"
 } > "$F"
 "$BIN" invoke --session "$SID" --code-file "$F" --timeout $T | python3 -c '

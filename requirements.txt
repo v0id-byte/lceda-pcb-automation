@@ -1,5 +1,4 @@
 shapely>=2.0
 numpy
 matplotlib
-openpyxl
 gerbonara

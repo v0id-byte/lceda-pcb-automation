@@ -1,4 +1,6 @@
-"""stubs.py : track ends that touch nothing of their own net (dangling stubs / antennas left by rips)."""
+"""stubs.py : track ends that touch nothing of their own net (dangling stubs / antennas left by rips).
+The end is probed with its round cap (radius w/2), so ends that stop just short of same-net copper still count as connected."""
+import math
 import _boot  # noqa: F401
 import cfg, pcbgeo
 from shapely.geometry import Point
@@ -9,10 +11,10 @@ tree = STRtree([o['shape'] for o in cu])
 n = 0
 for t in [o for o in objs if o['kind'] == 'track']:
     for x, y in ((t['x1'], t['y1']), (t['x2'], t['y2'])):
-        p = Point(x, y).buffer(0.5)
+        p = Point(x, y).buffer(t['w'] / 2 + 0.5)
         hit = [cu[int(i)] for i in tree.query(p)]
         hit = [o for o in hit if o is not t and o['net'] == t['net'] and set(o['layers']) & set(t['layers']) and o['shape'].intersects(p)]
         if not hit:
             n += 1
-            print(f"{t['net']:14s} L{t['layers'][0]:<3d} {t['id'][:10]} end {cfg.mm(x, y, 2)}")
+            print(f"{t['net']:14s} L{t['layers'][0]:<3d} {t['id'][:10]} end {cfg.mm(x, y, 2)}  len {math.hypot(t['x2'] - t['x1'], t['y2'] - t['y1']) / cfg.MIL:.2f} mm")
 print('dangling ends:', n)

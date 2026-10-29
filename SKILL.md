@@ -10,7 +10,7 @@ The discipline is what makes it safe: **every edit is planned off-board, pre-che
 and then verified by a different path** (DRC, netlist diff, re-exported geometry, Gerbers).
 
 > Schematic-side editing (net ports, adding parts, part swaps) is covered by the companion
-> `easyeda-pro` skill. This skill starts once the schematic is right and the PCB is being laid out.
+> [`easyeda-pro`](https://github.com/v0id-byte/easyeda-pro-claude-skill) skill. This skill starts once the schematic is right and the PCB is being laid out.
 
 ## 0. Ground rules
 
@@ -20,7 +20,9 @@ and then verified by a different path** (DRC, netlist diff, re-exported geometry
    that only feed pull-ups) gets a *region-scoped* rule (`js/region_track_rule.js`) and a written reason.
 3. `invoke` returning `ok:true` only means the JS ran. Check results by re-reading: DRC, netlist,
    `refresh.py` geometry, file mtime after save.
-4. All tools print board coordinates in **mm, y pointing down from the board's top edge**. Internally
+4. **Rehearse on a copy.** Copy the `.eprj2`, open the copy (`eda.sh open copy.eprj2 headless`) and
+   run the planned batch there first. Then repeat it on the real file.
+5. All tools print board coordinates in **mm, y pointing down from the board's top edge**. Internally
    everything is LCEDA mil (`cfg.X(mm)`, `cfg.Y(mm)`, `cfg.mm(X, Y)` convert).
 
 ## 1. Setup
@@ -30,7 +32,13 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 export LCEDA_WORK=~/pcb-work/myboard          # holds project.json, sid.txt, geom.json, poured.json
 bin/eda.sh open ~/Documents/LCEDA-Pro/projects/myboard.eprj2   # opens a window, saves sid.txt
 bin/eda.sh js/discover.js                      # project uuid, schematic pages, PCB doc ids
+# ... work ...
+bin/eda.sh close destroy                       # end the session and close its window (pitfalls #22)
 ```
+
+`open` creates a new session per call, and a copy of a project gets a **new project uuid**: run
+`discover.js` again for every file you open. `pcb()` opens the PCB document if the session has not
+opened it yet (pitfalls #21).
 
 Write `$LCEDA_WORK/project.json` from `examples/project.example.json`:
 - `project_uuid`, `pcb_doc`, `sch_pages` from discover.
@@ -117,10 +125,10 @@ Floating ground almost always has one of these causes:
 | DRC, rules untouched | `eda.sh js/drc.js 600` | `"sum": {}` |
 | Schematic == PCB | `netdiff.py sch.json pcb.json` | no changes, no single-pin nets |
 | Intent | `netdiff.py base_sch.json sch.json` | only the planned changes |
-| Connectivity | `islands.py` | only the known false splits (see pitfalls #6) |
+| Connectivity | `islands.py`, `stubs.py` | only the known false splits (see pitfalls #6); every dangling end explained |
 | Widths | `widths.py`, `necks.py NET:mil` | power nets meet their current; necks only at pins |
 | Corners | `angles.py` | no acute corners from your own routing |
-| Saved | `eda.sh js/save_all.js` ×2, then check the `.eprj2` mtime | file updated |
+| Saved | `eda.sh js/save_all.js`, `eda.sh close destroy`, reopen, re-read one change | the change is there after reopening (pitfalls #8) |
 | CAM | `cam_export.py OUT`, `camcheck.py OUT/gerber` | no copper at the edge, hole spacing and rings OK |
 
 Then snapshot the `.eprj2` together with `drc.json`, both netlists and `geom.json`, and have an
@@ -129,7 +137,7 @@ decoupling, current paths, BOM stock and price, assembly sides.
 
 ## 8. Files
 
-- `bin/eda.sh`: CLI wrapper (open / sessions / run JS).
+- `bin/eda.sh`: CLI wrapper (open / sessions / close / run JS).
 - `js/`: one job per script (discover, export_geom, export_poured, rebuild_pours, drc, save_all,
   import_changes, netlist_sch, netlist_pcb, gerber, bom_cpl, rip_move, net_rules, region_track_rule).
 - `lib/`: `cfg`, `pcbgeo` (geometry loader + islands), `router` (A*), `check` (clearance), `eda`

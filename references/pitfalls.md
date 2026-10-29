@@ -31,8 +31,10 @@
 7. **Rule classes are a matrix.** A "strong" class can be 8 mil track-to-track but still only 6 mil
    track-to-via and via-to-via. Read the whole table before trusting a tool's clearance setting.
 
-8. **`save()` can return true without writing.** Save every page and the PCB (`js/save_all.js`) twice,
-   then check the `.eprj2` mtime. Back up first.
+8. **`save()` can return true without writing, and the mtime is not proof either.** LCEDA 4.1 also
+   writes edits into the `.eprj2` history as they are made, so a correct save may leave the mtime
+   unchanged (nothing new to write). Run `js/save_all.js`, then prove persistence the only reliable way:
+   `eda.sh close destroy`, reopen the file in a new session, re-read the change. Back up first.
 
 9. **`ok:true` from `invoke` means only that the script ran.** Validate inside the script (throw on
    failure), or re-read afterwards.
@@ -78,3 +80,15 @@
 20. **Arcs are real geometry.** Pour fills use `'ARC', sweep_deg, x, y` segments (positive sweep = centre
     on the left of the chord), and boards contain arc tracks (`pcb_PrimitiveArc`). Treating arcs as
     straight chords overstates copper and invents false splits. `pcbgeo` now interpolates both.
+
+21. **A freshly opened project has no PCB document open.** Every `pcb_*` call then fails with
+    `指定的主题消息在对应的画布内没有相关订阅` ("no subscription for this topic in the canvas") or a
+    `null` result. `pcb()` in `bin/eda.sh` opens the document before activating it. Call it first in
+    any script you write.
+
+22. **Headless and CLI windows leak.** Every `open` holds a full editor renderer until it is closed.
+    End scripted runs with `eda.sh close destroy`. Never close a session the user opened in the GUI.
+
+23. **A tool that reports "dangling" must probe with the real copper.** A track end is a round cap of
+    radius w/2, not a point. Probing the bare point flags ends that stop a few mil short of a via or
+    a pour. `stubs.py` uses the cap.

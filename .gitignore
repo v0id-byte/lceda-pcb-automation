@@ -5,3 +5,4 @@ work/
 *.pkl
 .tmp/
 sid.txt
+.DS_Store
