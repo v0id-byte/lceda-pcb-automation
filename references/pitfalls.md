@@ -156,3 +156,14 @@
     `dogbone.py` moves what has room. Separately, `pcb_ManufactureData.getNetlistFile()` leaves every
     `pinInfoMap[*].name` empty; read pin names (K, A, ...) from the schematic netlist
     (`netlist_sch.js`), as `assembly_drawing.py` does for diode cathodes.
+
+36. **A few small vias can double the board price.** JLC charges for any via with a hole under 0.3 mm
+    or a diameter of 0.4 mm or less: TG155 material, four-wire via testing and a small-hole fee (about
+    CNY 250 on a 4-layer prototype, more than the board itself). The base design carried twelve
+    0.2/0.4 mm vias that DRC was happy with. `resize_vias.py` re-makes them at 12 mil / 0.45-0.5 mm.
+    Three traps on the way: LCEDA stores mil with one decimal, so a 0.3 mm hole comes back as
+    11.8 mil = 0.2997 mm (use 12 mil); deleting and re-creating a via orphans its teardrop, which DRC
+    reports as a disconnected track and teardrop (resize in place with `pcb_PrimitiveVia.modify`, or
+    delete the orphan by the id DRC gives); and the outer layers here use the 2 oz spacing table, where
+    via-to-track is 0.152 mm, not the 0.114 mm of the 1 oz table. Check the drill file (`T..C0.30480`)
+    before re-uploading.
