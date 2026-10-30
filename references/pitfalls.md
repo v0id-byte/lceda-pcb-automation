@@ -167,3 +167,14 @@
     delete the orphan by the id DRC gives); and the outer layers here use the 2 oz spacing table, where
     via-to-track is 0.152 mm, not the 0.114 mm of the 1 oz table. Check the drill file (`T..C0.30480`)
     before re-uploading.
+
+37. **A pad created through the API breaks every pour rebuild.** Any board-level pad made with
+    `pcb_PrimitivePad.create` (SMD or through-hole, plated or not, fiducial type or not, with or without
+    mask/heat-welding settings) makes every later `rebuildCopperRegion()` throw "Cannot read properties
+    of undefined (reading 'length')", so DRC and Gerbers run against stale copper. Delete the pad and the
+    rebuild works again. Build NPTH holes as round slot regions (a `pcb_PrimitiveFill` on layer 12 with a
+    `CIRCLE` polygon; it is exported as a drill, not a route) and fiducials as a copper disc plus a
+    mask-layer disc (layers 5/6), as `edge_rails.py` does. Two more traps when finding those objects
+    again: `getPrimitivesBBox()` returns nothing for slot regions, and a region's name is not kept, so
+    read the polygon data instead. And a slot's round end leaves the board edge uncut for one radius:
+    a tab keepout that stops at the tab lets the pour creep to 0.12 mm from the break line there.

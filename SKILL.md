@@ -147,6 +147,7 @@ Floating ground almost always has one of these causes:
 | Widths | `widths.py`, `necks.py NET:mil` | power nets meet their current; necks only at pins |
 | Corners | `angles.py` | no acute corners from your own routing |
 | Saved | `eda.sh js/save_all.js`, `eda.sh close destroy`, reopen, re-read one change | the change is there after reopening (pitfalls #8) |
+| Edge rails (optional) | `edge_rails.py --tabs top:X,bottom:X [--replace]` | DRC clean; copper to the board edge unchanged at every tab (pitfalls #37) |
 | CAM | `cam_export.py OUT [--no-silk]` (+ `polarity_silk.py OUT --text 'Board RevA'` for polarity-only silk), `camcheck.py OUT/gerber`, `assembly_drawing.py OUT/assembly.pdf` | no copper at the edge, hole spacing and rings OK, no new mask dams < 0.1 mm (pitfalls #34); assembly drawing readable, polarity marked |
 
 Then snapshot the `.eprj2` together with `drc.json`, both netlists and `geom.json`, and have an
@@ -160,7 +161,7 @@ decoupling, current paths, BOM stock and price, assembly sides.
   import_changes, netlist_sch, netlist_pcb, gerber, bom_cpl, rip_move, net_rules, region_track_rule).
 - `lib/`: `cfg`, `pcbgeo` (geometry loader + islands), `router` (A*), `check` (clearance), `eda`
   (run/commit), `camgeo` (Gerber parser).
-- `tools/`: the commands above, plus `courtyard.py` / `unoverlap.py` / `fix_overlaps.py` (footprint overlaps), `vias_in_pads.py` / `dogbone.py` (vias in pads), `resize_vias.py` (vias below the fab's standard size), `assembly_drawing.py` / `polarity_silk.py` (boards without full silkscreen), `route_order.py` (try net orders in memory), `place_route.py`
+- `tools/`: the commands above, plus `courtyard.py` / `unoverlap.py` / `fix_overlaps.py` (footprint overlaps), `vias_in_pads.py` / `dogbone.py` (vias in pads), `resize_vias.py` (vias below the fab's standard size), `edge_rails.py` (assembly rails, mouse bites, fiducials, tooling holes), `assembly_drawing.py` / `polarity_silk.py` (boards without full silkscreen), `route_order.py` (try net orders in memory), `place_route.py`
   (placement that must also route), `stubs.py` (dangling track ends), `move_via.py` / `move_part.py` (nudge copper and drag attached
   track ends, clearance-checked) for clearing a corridor.
 - `examples/ldo-breakout/`: a complete 2-layer run (`.eprj3` before/after + walkthrough). Use it to

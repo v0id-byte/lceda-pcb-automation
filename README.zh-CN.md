@@ -105,9 +105,9 @@ git clone https://github.com/v0id-byte/lceda-pcb-automation ~/.claude/skills/lce
 | `bin/eda.sh` | 命令行封装：`open`、`sessions`、`close`；运行 JS 文件时自动在前面加上 `CFG`、`ARGS` 和 `pcb()` |
 | `js/` | 每个脚本只做一件事：查工程、导出几何和铺铜、新建铺铜、重铺铜、DRC、导出网表、保存、更新 PCB、Gerber、BOM/坐标、拆线和挪器件、网络规则、区域规则 |
 | `lib/` | `cfg`（工程配置和单位换算）、`pcbgeo`（读几何、圆弧、孤岛）、`router`（A\*）、`check`（间距）、`eda`（执行和提交）、`camgeo`（Gerber 解析） |
-| `tools/` | `route_net` · `route_zone` · `route_order` · `manual` · `fit` · `place_route` · `move_part` · `move_via` · `gnd_fix` · `stitch` · `islands` · `stubs` · `courtyard` · `unoverlap` · `fix_overlaps` · `assembly_drawing` · `polarity_silk` · `vias_in_pads` · `dogbone` · `resize_vias` · `netdiff` · `widths` · `necks` · `angles` · `render` · `cam_export` · `camcheck` · `refresh` |
+| `tools/` | `route_net` · `route_zone` · `route_order` · `manual` · `fit` · `place_route` · `move_part` · `move_via` · `gnd_fix` · `stitch` · `islands` · `stubs` · `courtyard` · `unoverlap` · `fix_overlaps` · `assembly_drawing` · `polarity_silk` · `vias_in_pads` · `dogbone` · `resize_vias` · `edge_rails` · `netdiff` · `widths` · `necks` · `angles` · `render` · `cam_export` · `camcheck` · `refresh` |
 | `examples/` | `ldo-breakout`：一块用脚本做出来的 2 层板，工程是嘉立创EDA的 `.eprj3` 文件夹格式，有布线前和布线后两份，附操作教程 |
-| `references/` | [`pitfalls.md`](references/pitfalls.md)：在真实板子上踩过的 36 个坑；[`api-notes.md`](references/api-notes.md)：用到的嘉立创EDA API 及其怪癖 |
+| `references/` | [`pitfalls.md`](references/pitfalls.md)：在真实板子上踩过的 37 个坑；[`api-notes.md`](references/api-notes.md)：用到的嘉立创EDA API 及其怪癖 |
 
 ## 环境要求
 
